@@ -1,0 +1,32 @@
+# Root-level .gitignore — covers both frontend/ and backend/
+
+# Dependencies
+**/node_modules/
+
+# Backend compiled output
+backend/dist/
+
+# Next.js build output
+frontend/.next/
+frontend/out/
+
+# Environment files — NEVER commit these
+**/.env
+**/.env.local
+**/.env.production
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Misc
+.pnp
+.pnp.js
+/coverage
