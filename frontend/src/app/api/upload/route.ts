@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { WebPDFLoader } from '@langchain/community/document_loaders/web/pdf';
+import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { getVectorStore } from '@/lib/vectorstore';
 
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
         try {
           // Step 1 – Ingestion
           send(10, 'Extracting text from PDF...');
-          const loader = new WebPDFLoader(file);
+          const loader = new PDFLoader(file);
           const docs = await loader.load();
           send(25, `Extracted ${docs.length} page(s). Now chunking...`);
 
