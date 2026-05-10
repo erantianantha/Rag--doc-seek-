@@ -57,7 +57,8 @@ export default function Home() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('/api/upload', {
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+      const res = await fetch(`${baseUrl}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -113,7 +114,8 @@ export default function Home() {
     setChatting(true);
 
     try {
-      const res = await fetch('/api/chat', {
+      const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+      const res = await fetch(`${baseUrl}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: userMessage })
