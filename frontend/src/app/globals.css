@@ -1,14 +1,15 @@
 :root {
-  --bg-primary: #0a0a0b;
-  --bg-secondary: #131316;
-  --bg-panel: rgba(25, 25, 30, 0.6);
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-panel: rgba(10, 10, 10, 0.9);
+  --bg-tertiary: #1a1a1a;
   --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --accent-color: #6366f1;
-  --accent-hover: #4f46e5;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --success-color: #10b981;
-  --error-color: #ef4444;
+  --text-secondary: #a0a0a0;
+  --accent-color: #ffffff;
+  --accent-hover: #cccccc;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --success-color: #ffffff;
+  --error-color: #ff5555;
 }
 
 * {
@@ -24,9 +25,7 @@ body {
   line-height: 1.5;
   height: 100vh;
   overflow: hidden;
-  background-image: 
-    radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15), transparent 25%),
-    radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.1), transparent 25%);
+  background-image: none;
 }
 
 .app-container {
@@ -103,7 +102,7 @@ body {
 
 .btn {
   background: var(--accent-color);
-  color: white;
+  color: #000000;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 8px;
@@ -250,6 +249,7 @@ body {
 .message.user .message-content {
   background: var(--accent-color);
   border-color: var(--accent-hover);
+  color: #000000;
 }
 
 .sources-container {
@@ -315,7 +315,7 @@ body {
   height: 40px;
   border-radius: 8px;
   background: var(--accent-color);
-  color: white;
+  color: #000000;
   border: none;
   display: flex;
   align-items: center;

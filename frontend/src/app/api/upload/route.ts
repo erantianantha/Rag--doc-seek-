@@ -8,11 +8,21 @@ export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
+    let file: File | null = null;
+    let plainText = '';
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+    const contentType = req.headers.get('content-type') || '';
+    
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      file = formData.get('file') as File;
+    } else if (contentType.includes('application/json')) {
+      const body = await req.json();
+      plainText = body.text || '';
+    }
+
+    if (!file && !plainText) {
+      return NextResponse.json({ error: 'No file or text provided' }, { status: 400 });
     }
 
     const stream = new ReadableStream({
@@ -24,10 +34,25 @@ export async function POST(req: Request) {
 
         try {
           // Step 1 – Ingestion
-          send(10, 'Extracting text from PDF...');
-          const loader = new PDFLoader(file);
-          const docs = await loader.load();
-          send(25, `Extracted ${docs.length} page(s). Now chunking...`);
+          send(10, 'Extracting text...');
+          
+          let docs: any[] = [];
+          if (file) {
+            if (file.type === 'application/pdf') {
+              const loader = new PDFLoader(file);
+              docs = await loader.load();
+              send(25, `Extracted PDF (${docs.length} pages). Now chunking...`);
+            } else if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+              const text = await file.text();
+              docs = [{ pageContent: text, metadata: { source: file.name } }];
+              send(25, `Extracted text file. Now chunking...`);
+            } else {
+              throw new Error('Unsupported file type');
+            }
+          } else if (plainText) {
+            docs = [{ pageContent: plainText, metadata: { source: 'Pasted Text' } }];
+            send(25, `Extracted pasted text. Now chunking...`);
+          }
 
           // Step 2 – Chunking
           const splitter = new RecursiveCharacterTextSplitter({

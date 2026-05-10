@@ -37,30 +37,39 @@ export default function Home() {
     }
   };
 
+  const [uploadMode, setUploadMode] = useState<'file' | 'text'>('file');
+  const [plainText, setPlainText] = useState('');
+
   const handleFileChange = (selectedFile: File) => {
-    if (selectedFile.type === 'application/pdf') {
+    if (selectedFile.type === 'application/pdf' || selectedFile.type === 'text/plain' || selectedFile.name.endsWith('.txt')) {
       setFile(selectedFile);
       setUploadStatus(null);
     } else {
-      setUploadStatus({ type: 'error', message: 'Please upload a valid PDF document.' });
+      setUploadStatus({ type: 'error', message: 'Please upload a valid PDF or TXT document.' });
     }
   };
 
   const handleUpload = async () => {
-    if (!file) return;
+    if (uploadMode === 'file' && !file) return;
+    if (uploadMode === 'text' && !plainText.trim()) return;
     
     setUploading(true);
     setUploadStatus(null);
     setUploadProgress(0);
     
     const formData = new FormData();
-    formData.append('file', file);
+    if (uploadMode === 'file' && file) {
+      formData.append('file', file);
+    } else if (uploadMode === 'text') {
+      formData.append('text', plainText);
+    }
 
     try {
       const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
       const res = await fetch(`${baseUrl}/api/upload`, {
         method: 'POST',
-        body: formData,
+        body: uploadMode === 'file' ? formData : JSON.stringify({ text: plainText }),
+        headers: uploadMode === 'text' ? { 'Content-Type': 'application/json' } : {},
       });
       
       if (!res.body) throw new Error("No response body");
@@ -99,7 +108,7 @@ export default function Home() {
         }
       }
     } catch (err: any) {
-      setUploadStatus({ type: 'error', message: 'Failed to upload document.' });
+      setUploadStatus({ type: 'error', message: 'Failed to process document.' });
     } finally {
       setUploading(false);
     }
@@ -149,38 +158,64 @@ export default function Home() {
 
         <div>
           <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Data Source</h3>
-          <input 
-            type="file" 
-            accept=".pdf" 
-            ref={fileInputRef} 
-            onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
-            style={{ display: 'none' }}
-          />
           
-          <div 
-            className={`upload-zone ${dragActive ? 'drag-active' : ''}`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            {file ? (
-              <>
-                <FileText className="upload-icon" size={40} style={{ color: 'var(--accent-color)' }} />
-                <span className="upload-text" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{file.name}</span>
-                <span className="upload-text">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
-              </>
-            ) : (
-              <>
-                <UploadCloud className="upload-icon" size={40} />
-                <span className="upload-text">Click or drag PDF to upload</span>
-              </>
-            )}
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+            <button 
+              className={`btn ${uploadMode === 'file' ? 'active' : ''}`} 
+              style={{ flex: 1, padding: '0.5rem', background: uploadMode === 'file' ? 'var(--accent-color)' : 'transparent', color: uploadMode === 'file' ? '#000' : 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
+              onClick={() => setUploadMode('file')}
+            >File</button>
+            <button 
+              className={`btn ${uploadMode === 'text' ? 'active' : ''}`} 
+              style={{ flex: 1, padding: '0.5rem', background: uploadMode === 'text' ? 'var(--accent-color)' : 'transparent', color: uploadMode === 'text' ? '#000' : 'var(--text-secondary)', border: '1px solid var(--border-color)' }}
+              onClick={() => setUploadMode('text')}
+            >Text</button>
           </div>
+
+          {uploadMode === 'file' ? (
+            <>
+              <input 
+                type="file" 
+                accept=".pdf,.txt" 
+                ref={fileInputRef} 
+                onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
+                style={{ display: 'none' }}
+              />
+              
+              <div 
+                className={`upload-zone ${dragActive ? 'drag-active' : ''}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {file ? (
+                  <>
+                    <FileText className="upload-icon" size={40} style={{ color: 'var(--accent-color)' }} />
+                    <span className="upload-text" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{file.name}</span>
+                    <span className="upload-text">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="upload-icon" size={40} />
+                    <span className="upload-text">Click or drag PDF/TXT to upload</span>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            <textarea
+              className="chat-input"
+              style={{ width: '100%', minHeight: '150px', padding: '1rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '12px', resize: 'vertical' }}
+              placeholder="Paste your plain text here..."
+              value={plainText}
+              onChange={(e) => setPlainText(e.target.value)}
+            />
+          )}
         </div>
 
-        {file && !isIndexed && (
+        {((uploadMode === 'file' && file) || (uploadMode === 'text' && plainText.trim())) && !isIndexed && (
           <button className="btn" onClick={handleUpload} disabled={uploading}>
             {uploading ? <div className="loader"></div> : 'Process Document'}
           </button>
@@ -212,7 +247,7 @@ export default function Home() {
               <Bot className="empty-icon" />
               <h3>NotebookLM Assistant</h3>
               <p style={{ maxWidth: '400px' }}>
-                Upload a PDF document in the sidebar to create a specialized AI assistant that can answer questions based purely on the document's content.
+                Upload a PDF/TXT document or paste plain text in the sidebar to create a specialized AI assistant that can answer questions based purely on the content provided.
               </p>
             </div>
           ) : (

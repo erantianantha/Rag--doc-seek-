@@ -9,8 +9,8 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 router.post('/', upload.single('file'), async (req: Request, res: Response) => {
-  if (!req.file) {
-    res.status(400).json({ error: 'No file provided' });
+  if (!req.file && !req.body.text) {
+    res.status(400).json({ error: 'No file or text provided' });
     return;
   }
 
@@ -24,12 +24,29 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
   };
 
   try {
-    // Step 1 — Ingestion via pdf-parse (works natively in Node.js, no worker issues)
-    send(10, 'Extracting text from PDF...');
-    const pdfData = await pdfParse(req.file.buffer);
-    const fullText = pdfData.text;
-    const numPages = pdfData.numpages;
-    send(25, `Extracted ${numPages} page(s). Now chunking...`);
+    send(10, 'Extracting text...');
+    
+    let fullText = '';
+    let metadata: any = {};
+
+    if (req.file) {
+      if (req.file.mimetype === 'application/pdf') {
+        const pdfData = await pdfParse(req.file.buffer);
+        fullText = pdfData.text;
+        metadata = { source: req.file.originalname, totalPages: pdfData.numpages };
+        send(25, `Extracted PDF (${pdfData.numpages} pages). Now chunking...`);
+      } else if (req.file.mimetype === 'text/plain') {
+        fullText = req.file.buffer.toString('utf-8');
+        metadata = { source: req.file.originalname };
+        send(25, `Extracted text file. Now chunking...`);
+      } else {
+        throw new Error('Unsupported file type. Please upload a PDF or TXT file.');
+      }
+    } else if (req.body.text) {
+      fullText = req.body.text;
+      metadata = { source: 'Pasted Text' };
+      send(25, `Extracted pasted text. Now chunking...`);
+    }
 
     // Step 2 — Chunking with RecursiveCharacterTextSplitter
     const splitter = new RecursiveCharacterTextSplitter({
@@ -38,7 +55,7 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
     });
     const rawDoc = new Document({
       pageContent: fullText,
-      metadata: { source: req.file.originalname, totalPages: numPages },
+      metadata,
     });
     const chunks = await splitter.splitDocuments([rawDoc]);
     send(40, `Created ${chunks.length} chunks. Embedding now...`);
