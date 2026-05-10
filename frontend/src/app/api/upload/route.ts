@@ -42,10 +42,10 @@ export async function POST(req: Request) {
               const loader = new PDFLoader(file);
               docs = await loader.load();
               send(25, `Extracted PDF (${docs.length} pages). Now chunking...`);
-            } else if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+            } else if (file.type === 'text/plain' || file.type === 'text/csv' || file.name.endsWith('.txt') || file.name.endsWith('.csv')) {
               const text = await file.text();
               docs = [{ pageContent: text, metadata: { source: file.name } }];
-              send(25, `Extracted text file. Now chunking...`);
+              send(25, `Extracted ${file.name.endsWith('.csv') ? 'CSV' : 'text'} file. Now chunking...`);
             } else {
               throw new Error('Unsupported file type');
             }

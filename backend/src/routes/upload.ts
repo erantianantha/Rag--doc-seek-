@@ -35,12 +35,12 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
         fullText = pdfData.text;
         metadata = { source: req.file.originalname, totalPages: pdfData.numpages };
         send(25, `Extracted PDF (${pdfData.numpages} pages). Now chunking...`);
-      } else if (req.file.mimetype === 'text/plain') {
+      } else if (req.file.mimetype === 'text/plain' || req.file.mimetype === 'text/csv' || req.file.originalname.endsWith('.csv')) {
         fullText = req.file.buffer.toString('utf-8');
         metadata = { source: req.file.originalname };
-        send(25, `Extracted text file. Now chunking...`);
+        send(25, `Extracted ${req.file.originalname.endsWith('.csv') ? 'CSV' : 'text'} file. Now chunking...`);
       } else {
-        throw new Error('Unsupported file type. Please upload a PDF or TXT file.');
+        throw new Error('Unsupported file type. Please upload a PDF, TXT, or CSV file.');
       }
     } else if (req.body.text) {
       fullText = req.body.text;

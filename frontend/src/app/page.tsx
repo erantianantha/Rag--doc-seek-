@@ -41,11 +41,17 @@ export default function Home() {
   const [plainText, setPlainText] = useState('');
 
   const handleFileChange = (selectedFile: File) => {
-    if (selectedFile.type === 'application/pdf' || selectedFile.type === 'text/plain' || selectedFile.name.endsWith('.txt')) {
+    if (
+      selectedFile.type === 'application/pdf' || 
+      selectedFile.type === 'text/plain' || 
+      selectedFile.type === 'text/csv' ||
+      selectedFile.name.endsWith('.txt') ||
+      selectedFile.name.endsWith('.csv')
+    ) {
       setFile(selectedFile);
       setUploadStatus(null);
     } else {
-      setUploadStatus({ type: 'error', message: 'Please upload a valid PDF or TXT document.' });
+      setUploadStatus({ type: 'error', message: 'Please upload a valid PDF, TXT, or CSV document.' });
     }
   };
 
@@ -176,7 +182,7 @@ export default function Home() {
             <>
               <input 
                 type="file" 
-                accept=".pdf,.txt" 
+                accept=".pdf,.txt,.csv" 
                 ref={fileInputRef} 
                 onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
                 style={{ display: 'none' }}
@@ -199,7 +205,7 @@ export default function Home() {
                 ) : (
                   <>
                     <UploadCloud className="upload-icon" size={40} />
-                    <span className="upload-text">Click or drag PDF/TXT to upload</span>
+                    <span className="upload-text">Click or drag PDF/TXT/CSV to upload</span>
                   </>
                 )}
               </div>
@@ -247,7 +253,7 @@ export default function Home() {
               <Bot className="empty-icon" />
               <h3>NotebookLM Assistant</h3>
               <p style={{ maxWidth: '400px' }}>
-                Upload a PDF/TXT document or paste plain text in the sidebar to create a specialized AI assistant that can answer questions based purely on the content provided.
+                Upload a PDF/TXT/CSV document or paste plain text in the sidebar to create a specialized AI assistant that can answer questions based purely on the content provided.
               </p>
             </div>
           ) : (
