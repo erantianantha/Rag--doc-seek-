@@ -384,3 +384,217 @@ body {
     border: none;
   }
 }
+
+/* Corrective RAG (CRAG) styles */
+.web-search-indicator {
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.web-search-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.825rem;
+}
+
+.search-globe-icon {
+  margin-right: 6px;
+  color: #38bdf8;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.web-search-query {
+  color: #ffffff;
+}
+
+.sources-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.source-item-card {
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.source-item-card.relevant {
+  border-left: 3px solid #10b981;
+}
+
+.source-item-card.irrelevant {
+  border-left: 3px solid #ef4444;
+  opacity: 0.65;
+}
+
+.source-item-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.source-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.source-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.source-status-badge {
+  display: flex;
+  align-items: center;
+}
+
+.icon-green {
+  color: #10b981;
+  margin-right: 4px;
+}
+
+.status-text-green {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.icon-red {
+  color: #ef4444;
+  margin-right: 4px;
+}
+
+.status-text-red {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.source-snippet-text {
+  color: var(--text-secondary);
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.web-results-container {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color);
+}
+
+.web-results-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.web-result-card {
+  font-size: 0.8rem;
+  background: rgba(56, 189, 248, 0.03);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-left: 3px solid #38bdf8;
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.web-result-card:hover {
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.web-result-header {
+  margin-bottom: 0.4rem;
+}
+
+.web-result-link {
+  display: inline-flex;
+  align-items: center;
+  color: #38bdf8;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.775rem;
+}
+
+.web-result-link:hover {
+  text-decoration: underline;
+}
+
+.link-icon {
+  margin-left: 4px;
+}
+
+.web-result-snippet-text {
+  color: var(--text-secondary);
+  line-height: 1.4;
+  font-style: italic;
+}
+
+/* Inline Code Style */
+.code-inline {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #38bdf8;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.875em;
+}
+
+/* Collapsible details style for irrelevant sources */
+.irrelevant-sources-details {
+  margin-top: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.01);
+  padding: 0.5rem 0.75rem;
+}
+
+.irrelevant-sources-details[open] {
+  background: rgba(255, 255, 255, 0.02);
+  padding-bottom: 0.75rem;
+}
+
+.irrelevant-sources-summary {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  list-style: none; /* hide default arrow in webkit */
+  display: flex;
+  align-items: center;
+}
+
+/* Custom indicator arrow */
+.irrelevant-sources-summary::before {
+  content: "▸";
+  margin-right: 6px;
+  display: inline-block;
+  transition: transform 0.2s ease;
+  color: var(--text-secondary);
+}
+
+.irrelevant-sources-details[open] .irrelevant-sources-summary::before {
+  transform: rotate(90deg);
+}
+
+/* Hide default Chrome/Safari details marker */
+.irrelevant-sources-summary::-webkit-details-marker {
+  display: none;
+}

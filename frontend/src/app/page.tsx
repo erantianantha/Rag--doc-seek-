@@ -1,7 +1,58 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { UploadCloud, FileText, Send, BookOpen, Bot, User } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { UploadCloud, FileText, Send, BookOpen, Bot, User, Globe, CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
+
+function renderFormattedText(text: string) {
+  const lines = text.split('\n');
+  
+  return lines.map((line, lineIdx) => {
+    // Process bullet indentation styling
+    let indentStyle: React.CSSProperties = {};
+    
+    if (line.startsWith('   - ') || line.startsWith('  - ')) {
+      indentStyle = { paddingLeft: '1.5rem', textIndent: '-0.75rem', marginBottom: '0.25rem' };
+    } else if (line.startsWith('- ') || line.startsWith('* ')) {
+      indentStyle = { paddingLeft: '1rem', textIndent: '-0.5rem', marginBottom: '0.25rem' };
+    } else {
+      indentStyle = { marginBottom: '0.5rem' };
+    }
+    
+    // Parse inline code (backticks)
+    const codeParts = line.split('`');
+    const lineElements: React.ReactNode[] = [];
+    
+    codeParts.forEach((part, partIdx) => {
+      if (partIdx % 2 !== 0) {
+        lineElements.push(<code key={`code-${partIdx}`} className="code-inline">{part}</code>);
+      } else {
+        // Parse bold (double asterisks)
+        const boldParts = part.split('**');
+        boldParts.forEach((bPart, bIdx) => {
+          if (bIdx % 2 !== 0) {
+            lineElements.push(<strong key={`bold-${partIdx}-${bIdx}`}>{bPart}</strong>);
+          } else {
+            // Parse italic (single asterisks)
+            const italicParts = bPart.split('*');
+            italicParts.forEach((iPart, iIdx) => {
+              if (iIdx % 2 !== 0) {
+                lineElements.push(<em key={`em-${partIdx}-${bIdx}-${iIdx}`}>{iPart}</em>);
+              } else {
+                lineElements.push(iPart);
+              }
+            });
+          }
+        });
+      }
+    });
+
+    return (
+      <div key={lineIdx} style={indentStyle}>
+        {lineElements.length === 0 || (lineElements.length === 1 && lineElements[0] === '') ? '\u00A0' : lineElements}
+      </div>
+    );
+  });
+}
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -11,7 +62,7 @@ export default function Home() {
   const [isIndexed, setIsIndexed] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   
-  const [messages, setMessages] = useState<Array<{ role: 'user' | 'ai', content: string, sources?: any[] }>>([]);
+  const [messages, setMessages] = useState<Array<{ role: 'user' | 'ai', content: string, sources?: any[], webSearch?: any }>>([]);
   const [input, setInput] = useState('');
   const [chatting, setChatting] = useState(false);
 
@@ -138,7 +189,7 @@ export default function Home() {
       const data = await res.json();
       
       if (res.ok) {
-        setMessages(prev => [...prev, { role: 'ai', content: data.answer, sources: data.sources }]);
+        setMessages(prev => [...prev, { role: 'ai', content: data.answer, sources: data.sources, webSearch: data.webSearch }]);
       } else {
         setMessages(prev => [...prev, { role: 'ai', content: `Error: ${data.error}` }]);
       }
@@ -264,16 +315,92 @@ export default function Home() {
                     {msg.role === 'ai' ? <Bot size={20} /> : <User size={20} />}
                   </div>
                   <div className="message-content">
-                    <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
+                    <div style={{ wordBreak: 'break-word' }}>{renderFormattedText(msg.content)}</div>
                     
-                    {msg.sources && msg.sources.length > 0 && (
-                      <div className="sources-container">
-                        <div className="sources-title">Sources used:</div>
-                        {msg.sources.map((src, i) => (
-                          <div key={i} className="source-item">
-                            <span style={{color: 'var(--accent-color)', fontWeight: 'bold'}}>Page {src.pageNumber}:</span> "{src.content}"
-                          </div>
-                        ))}
+                    {msg.webSearch && (
+                      <div className="web-search-indicator">
+                        <div className="web-search-badge">
+                          <Globe size={14} className="search-globe-icon" />
+                          <span>
+                            Searched the web ({msg.webSearch.engine}) for:{' '}
+                            <strong className="web-search-query">"{msg.webSearch.query}"</strong>
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {msg.sources && msg.sources.length > 0 && (() => {
+                      const indexedSources = msg.sources.map((src, i) => ({ ...src, originalIndex: i }));
+                      const relevantSources = indexedSources.filter(src => src.relevant);
+                      const irrelevantSources = indexedSources.filter(src => !src.relevant);
+
+                      return (
+                        <div className="sources-container">
+                          {relevantSources.length > 0 && (
+                            <>
+                              <div className="sources-title">Document Chunks Used</div>
+                              <div className="sources-grid" style={{ marginBottom: '1rem' }}>
+                                {relevantSources.map((src) => (
+                                  <div key={src.originalIndex} className="source-item-card relevant">
+                                    <div className="source-header">
+                                      <span className="source-label">
+                                        Source {src.originalIndex + 1} — Page {src.pageNumber} ({src.sourceName})
+                                      </span>
+                                      <span className="source-status-badge">
+                                        <CheckCircle2 size={12} className="icon-green" />
+                                        <span className="status-text-green">Relevant</span>
+                                      </span>
+                                    </div>
+                                    <p className="source-snippet-text">"{src.content}"</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </>
+                          )}
+
+                          {irrelevantSources.length > 0 && (
+                            <details className="irrelevant-sources-details">
+                              <summary className="irrelevant-sources-summary">
+                                Show {irrelevantSources.length} irrelevant document source{irrelevantSources.length > 1 ? 's' : ''} filtered out
+                              </summary>
+                              <div className="sources-grid" style={{ marginTop: '0.75rem' }}>
+                                {irrelevantSources.map((src) => (
+                                  <div key={src.originalIndex} className="source-item-card irrelevant">
+                                    <div className="source-header">
+                                      <span className="source-label">
+                                        Source {src.originalIndex + 1} — Page {src.pageNumber} ({src.sourceName})
+                                      </span>
+                                      <span className="source-status-badge">
+                                        <XCircle size={12} className="icon-red" />
+                                        <span className="status-text-red">Irrelevant</span>
+                                      </span>
+                                    </div>
+                                    <p className="source-snippet-text">"{src.content}"</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </details>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {msg.webSearch && msg.webSearch.results && msg.webSearch.results.length > 0 && (
+                      <div className="web-results-container">
+                        <div className="sources-title">Web Search Context Used</div>
+                        <div className="web-results-grid">
+                          {msg.webSearch.results.map((res: any, i: number) => (
+                            <div key={i} className="web-result-card">
+                              <div className="web-result-header">
+                                <a href={res.url} target="_blank" rel="noopener noreferrer" className="web-result-link">
+                                  <span>{res.title}</span>
+                                  <ExternalLink size={12} className="link-icon" />
+                                </a>
+                              </div>
+                              <p className="web-result-snippet-text">"{res.content}"</p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
